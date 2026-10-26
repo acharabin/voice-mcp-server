@@ -67,6 +67,7 @@ MCP_HOST = os.getenv("MCP_HOST", "127.0.0.1").strip()
 MCP_PORT = int(os.getenv("MCP_PORT", "10000"))
 MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", f"http://127.0.0.1:{MCP_PORT}/mcp").strip().rstrip("/")
 OAUTH_SCOPE = os.getenv("OAUTH_SCOPE", "voice:generate").strip()
+OAUTH_FORCE_LOOPBACK = os.getenv("OAUTH_FORCE_LOOPBACK", "false").strip().lower() in {"1", "true", "yes"}
 JWT_ALGORITHMS = [item.strip() for item in os.getenv("OAUTH_JWT_ALGORITHMS", "RS256").split(",") if item.strip()]
 
 _oauth_names = ("OAUTH_ISSUER", "OAUTH_CLIENT_ID", "OAUTH_AUDIENCE", "OAUTH_REDIRECT_URI")
@@ -179,6 +180,7 @@ class MCPAccessMiddleware:
     async def __call__(self, scope, receive, send):
         if (self.oauth_enabled and scope["type"] == "http"
                 and scope.get("path", "").rstrip("/") == "/mcp"
+                and not OAUTH_FORCE_LOOPBACK
                 and is_loopback_address((scope.get("client") or (None,))[0])):
             scope = dict(scope)
             headers = [(key, value) for key, value in scope.get("headers", [])
@@ -189,7 +191,10 @@ class MCPAccessMiddleware:
 
 async def auth_config(request: Request) -> JSONResponse:
     return JSONResponse({
-        "authRequired": OAUTH_REQUIRED and not is_loopback_address(request.client.host if request.client else None),
+        "authRequired": OAUTH_REQUIRED and (
+            OAUTH_FORCE_LOOPBACK
+            or not is_loopback_address(request.client.host if request.client else None)
+        ),
         "issuer": OAUTH_ISSUER,
         "clientId": OAUTH_CLIENT_ID,
         "audience": OAUTH_AUDIENCE,
@@ -201,7 +206,7 @@ async def auth_config(request: Request) -> JSONResponse:
 
 async def authenticate_request(request: Request) -> tuple[str | None, Response | None]:
     local_request = is_loopback_address(request.client.host if request.client else None)
-    if local_request or not OAUTH_REQUIRED:
+    if (local_request and not OAUTH_FORCE_LOOPBACK) or not OAUTH_REQUIRED:
         return "loopback", None
     authorization = request.headers.get("authorization", "")
     scheme, _, token = authorization.partition(" ")
