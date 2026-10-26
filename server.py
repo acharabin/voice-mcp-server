@@ -58,7 +58,7 @@ from starlette.staticfiles import StaticFiles
 from auth import OIDCTokenVerifier
 from DeepLearningExamples.PyTorch.SpeechSynthesis.Tacotron2 import inference
 from config.config import args, parser
-from conversation import create_speech_rewriter, create_voice_agent, improve_spoken_text
+from conversation import create_voice_agent
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +69,7 @@ MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", f"http://127.0.0.1:{MCP_PORT}/mcp")
 OAUTH_SCOPE = os.getenv("OAUTH_SCOPE", "voice:generate").strip()
 OAUTH_FORCE_LOOPBACK = os.getenv("OAUTH_FORCE_LOOPBACK", "false").strip().lower() in {"1", "true", "yes"}
 JWT_ALGORITHMS = [item.strip() for item in os.getenv("OAUTH_JWT_ALGORITHMS", "RS256").split(",") if item.strip()]
+MAX_ASSISTANT_REPLY_CHARS = 99
 
 _oauth_names = ("OAUTH_ISSUER", "OAUTH_CLIENT_ID", "OAUTH_AUDIENCE", "OAUTH_REDIRECT_URI")
 _oauth_values = {name: os.getenv(name, "").strip() for name in _oauth_names}
@@ -108,8 +109,31 @@ class AudioSamples(BaseModel):
 
 mcp = MCPServer("Public Voice MCP", **({"token_verifier": verifier, "auth": mcp_auth} if OAUTH_REQUIRED else {}))
 voice_agent = create_voice_agent()
-speech_rewriter = create_speech_rewriter()
 _inference_lock = threading.Lock()
+_model_cache_lock = threading.Lock()
+_model_cache = {}
+_load_inference_model = inference.load_and_setup_model
+
+
+def load_cached_inference_model(model_name, model_parser, checkpoint, fp16_run, cpu_run,
+                                univnet_config, forward_is_infer=False):
+    """Reuse the fixed Tacotron2/UnivNet models instead of reloading weights per request."""
+    cache_key = (model_name, checkpoint, fp16_run, cpu_run, univnet_config, forward_is_infer)
+    model = _model_cache.get(cache_key)
+    if model is not None:
+        return model
+    with _model_cache_lock:
+        model = _model_cache.get(cache_key)
+        if model is None:
+            model = _load_inference_model(
+                model_name, model_parser, checkpoint, fp16_run, cpu_run,
+                univnet_config, forward_is_infer=forward_is_infer,
+            )
+            _model_cache[cache_key] = model
+    return model
+
+
+inference.load_and_setup_model = load_cached_inference_model
 
 
 def synthesize_samples(text: str, maxcharacters: int = 200, peak_level: float = 1.0,
@@ -273,12 +297,14 @@ async def chat_api(request: Request) -> Response:
             ]
         else:
             raw_parts = [str(content).strip()]
-        processed_parts = await improve_spoken_text(raw_parts, speech_rewriter)
-        reply = " ".join(part for part in processed_parts if part).strip()
+        reply = " ".join(raw_parts).strip()
         if not reply:
             raise RuntimeError("The assistant returned an empty response")
-        if len(reply) > 1200:
-            reply = reply[:1197].rsplit(" ", 1)[0] + "..."
+        if len(reply) > MAX_ASSISTANT_REPLY_CHARS:
+            shortened = reply[:MAX_ASSISTANT_REPLY_CHARS - 3]
+            if " " in shortened:
+                shortened = shortened.rsplit(" ", 1)[0]
+            reply = shortened.rstrip(" ,;:-") + "..."
         return JSONResponse({"reply": reply, "conversation_id": conversation_id})
     except (ValueError, TypeError) as exc:
         return JSONResponse({"error": str(exc)}, status_code=400)

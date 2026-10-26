@@ -1,0 +1,16 @@
+138.197.152.248 {
+	tls {
+		issuer acme https://acme-v02.api.letsencrypt.org/directory {
+			profile shortlived
+		}
+	}
+
+	@keycloak path /auth /auth/*
+	handle @keycloak {
+		reverse_proxy 127.0.0.1:8081
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:10001
+	}
+}

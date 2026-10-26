@@ -2,6 +2,7 @@ __pycache__
 test/
 .env
 .env.keycloak
+.env.public
 .venv/
 models/
 DeepLearningExamples/
