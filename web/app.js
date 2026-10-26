@@ -55,7 +55,7 @@ async function signIn() {
     url.searchParams.set("response_type", "code");
     url.searchParams.set("client_id", config.clientId);
     url.searchParams.set("redirect_uri", config.redirectUri);
-    url.searchParams.set("scope", `openid profile ${config.scope}`);
+    url.searchParams.set("scope", `openid ${config.scope}`);
     url.searchParams.set("state", state);
     url.searchParams.set("code_challenge", challenge);
     url.searchParams.set("code_challenge_method", "S256");
