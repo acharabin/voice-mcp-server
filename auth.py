@@ -73,7 +73,8 @@ class OIDCTokenVerifier:
                 claims=claims,
             )
         except (jwt.PyJWTError, OSError, ValueError, KeyError, TypeError) as exc:
-            logger.info("Rejected OAuth access token: %s", type(exc).__name__)
+            detail = getattr(exc, "claim", None) or str(exc)
+            logger.info("Rejected OAuth access token: %s: %s", type(exc).__name__, detail)
             return None
 
     async def verify_token(self, token: str) -> AccessToken | None:
