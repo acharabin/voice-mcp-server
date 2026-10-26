@@ -161,7 +161,11 @@ def is_loopback_address(host: str | None) -> bool:
         address = ipaddress.ip_address(host)
     except ValueError:
         return False
-    return address.is_loopback or bool(address.ipv4_mapped and address.ipv4_mapped.is_loopback)
+    return address.is_loopback or (
+        isinstance(address, ipaddress.IPv6Address)
+        and address.ipv4_mapped is not None
+        and address.ipv4_mapped.is_loopback
+    )
 
 
 class MCPAccessMiddleware:
