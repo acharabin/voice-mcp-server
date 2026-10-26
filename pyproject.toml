@@ -1,0 +1,31 @@
+[project]
+name = "public-mcp-server"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Andrew Charabin", email = "122898165+acharabin@users.noreply.github.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "ipython>=9.17.1",
+    "jupyterlab>=4.6.4",
+    "mcp>=2.3.0",
+    "PyJWT[crypto]>=2.10.1",
+    "numpy>=2.5.4",
+    "requests>=2.34.2",
+    "starlette>=1.10.0",
+    "torch>=2.14.1",
+    "uvicorn>=0.54.0",
+    "langchain>=1.0.0,<2.0",
+    "langchain-openai>=1.7.2",
+    "langgraph>=1.0.0,<2.0",
+]
+
+[project.scripts]
+public-mcp-server = "public_mcp_server:main"
+
+[build-system]
+requires = ["uv_build>=0.12.22,<0.13.0"]
+build-backend = "uv_build"
+

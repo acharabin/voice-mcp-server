@@ -1,0 +1,17 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.1
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME:?Set KC_BOOTSTRAP_ADMIN_USERNAME in .env.keycloak}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD:?Set KC_BOOTSTRAP_ADMIN_PASSWORD in .env.keycloak}
+      VOICE_APP_URL: ${VOICE_APP_URL:-http://localhost:10000/}
+      VOICE_APP_ORIGIN: ${VOICE_APP_ORIGIN:-http://localhost:10000}
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./keycloak/voice-ai-realm.json:/opt/keycloak/data/import/voice-ai-realm.json:ro
+      - keycloak-data:/opt/keycloak/data/h2
+
+volumes:
+  keycloak-data:

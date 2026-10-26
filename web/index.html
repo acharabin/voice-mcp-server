@@ -1,0 +1,39 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Talk with Andrew's Voice</title>
+  <link rel="stylesheet" href="/assets/app.css">
+  <script src="/assets/app.js" defer></script>
+</head>
+<body>
+  <main class="shell chat-shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Andrew's Voice home"><span class="brand-mark">V</span><span>Andrew's Voice</span></a>
+      <div class="top-actions">
+        <button id="new-chat-button" class="button button-quiet" type="button">New chat</button>
+        <button id="auth-button" class="button button-quiet" type="button" hidden>Sign in</button>
+      </div>
+    </header>
+    <section class="hero chat-hero">
+      <p class="eyebrow">A VOICE CONVERSATION</p>
+      <h1>Let's talk<span>.</span></h1>
+      <p class="intro">Ask me anything. I'll answer and speak the response in Andrew's voice.</p>
+    </section>
+    <section id="messages" class="messages" role="log" aria-live="polite" aria-label="Conversation">
+      <article class="message message-assistant">
+        <div class="message-avatar" aria-hidden="true">V</div>
+        <div class="message-content"><span class="message-label">Andrew's voice assistant</span><p>Hi, I'm here. What would you like to talk about?</p></div>
+      </article>
+    </section>
+    <form id="composer-form" class="composer chat-composer">
+      <div class="composer-head"><label for="text-input">Your message</label><span id="count">0 / 2000</span></div>
+      <textarea id="text-input" maxlength="2000" placeholder="Write a message..." rows="3" required></textarea>
+      <div class="composer-foot"><span id="status" role="status">Loading assistant...</span><button id="speak-button" class="button button-primary" type="submit" disabled>Send</button></div>
+    </form>
+    <footer><span>Conversation is held in server memory while it is running.</span><span id="account-label"></span></footer>
+  </main>
+</body>
+</html>
