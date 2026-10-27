@@ -90,4 +90,25 @@ OAUTH_FORCE_LOOPBACK=true
 
 The public Keycloak client is imported with the HTTPS callback and origin above, the `basic` default scope, PKCE S256, and the custom `voice-ai-api` audience mapper. Create a regular user in `https://138.197.152.248/auth/admin/` under the `voice-ai` realm. The existing development realm and its H2 database remain separate; do not expose the dev port 8080 publicly.
 
+### Keep the public deployment running
+
+The repository includes `deploy/voice-ai.service` for running the Voice AI app under systemd and `scripts/restart-deployment.sh` for a cron health check. The service file assumes the project is at `/root/voice-mcp-server` and `uv` is at `/root/.local/bin/uv`; adjust those paths if your server differs. Stop any manually running `uv run python server.py` process with Ctrl+C before enabling the service.
+
+After copying both files to the server, install and start the app service:
+
+```bash
+sudo cp deploy/voice-ai.service /etc/systemd/system/voice-ai.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now voice-ai.service
+sudo systemctl status voice-ai.service --no-pager
+```
+
+Run the health-check script every five minutes from root's crontab (`sudo crontab -e`):
+
+```cron
+*/5 * * * * /bin/bash /root/voice-mcp-server/scripts/restart-deployment.sh
+```
+
+The script appends its activity to `logs/log.txt`, ensures the public Keycloak/PostgreSQL Compose stack is started, starts Caddy if its service is down, and restarts Keycloak or the app only when their health checks fail. The app is checked through `http://127.0.0.1:10001/auth/config`; Keycloak is checked through its local discovery endpoint. systemd and Docker restart policies also recover processes that exit unexpectedly. Inspect the log with `tail -n 100 /root/voice-mcp-server/logs/log.txt`.
+
 The droplet currently has 1 vCPU and 2 GB RAM. Running PyTorch inference, PostgreSQL, and production Keycloak together may still exhaust memory under load; short replies and model caching reduce work but do not guarantee adequate capacity. Watch memory usage and move Keycloak to a separate service or resize the droplet if it continues to restart.

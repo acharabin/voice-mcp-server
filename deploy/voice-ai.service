@@ -1,0 +1,19 @@
+[Unit]
+Description=Voice AI web app and MCP server
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/voice-mcp-server
+Environment=PATH=/root/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/root/.local/bin/uv run --project /root/voice-mcp-server python server.py
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=45
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target

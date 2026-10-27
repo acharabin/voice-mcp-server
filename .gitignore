@@ -6,3 +6,4 @@ test/
 .venv/
 models/
 DeepLearningExamples/
+/logs/
