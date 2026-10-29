@@ -26,6 +26,6 @@ For local development, the MCP endpoint is [http://127.0.0.1:10000/mcp](http://1
 
 The public IP deployment uses HTTPS through Caddy. Caddy accepts public traffic on ports 80 and 443 and reverse proxies to the app on `127.0.0.1:10001`; Keycloak is served under `/auth` and listens privately on `127.0.0.1:8081`. Keep the app bound to loopback behind this proxy and set `MCP_SERVER_URL=https://138.197.152.248/mcp`, `MCP_ALLOWED_HOSTS=138.197.152.248`, and `MCP_ALLOWED_ORIGINS=https://138.197.152.248`. Set `OAUTH_FORCE_LOOPBACK=true` so OAuth remains enforced when the proxy connects to the app locally.
 
-For deployment steps, production Keycloak/PostgreSQL setup, and OAuth client settings, see the [Keycloak OAuth setup](docs/keycloak-setup.md). For Ubuntu installation, model files, and starting the server, see the [Ubuntu startup guide](docs/ubuntu-startup-guide.md).
+For deployment steps, production Keycloak/PostgreSQL setup, and OAuth client settings, see the [Keycloak OAuth setup](docs/keycloak-setup.md). For Ubuntu installation and starting the server, see the [Ubuntu startup guide](docs/ubuntu-startup-guide.md); model downloads, checkpoint paths, and inference details are in the [model setup guide](docs/model-setup.md).
 
 Conversation history is stored in process memory and resets when the server restarts. OpenAI moderation checks input and output; the OpenAI API key remains server-side and must never be added to browser code.

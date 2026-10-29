@@ -2,6 +2,8 @@
 
 This guide starts the Tacotron2 voice service and its browser client on one Ubuntu machine. The conversational browser client is served by the same process as the MCP server; it calls the local chat and audio routes, so there is no separate frontend process.
 
+The latest deployment instance uses **2 vCPUs and 4 GB of RAM**. Use this as the replication target; it describes the current instance, not a minimum sizing guarantee.
+
 ## 1. Install system tools
 
 Use Ubuntu 22.04 or newer with Python 3.12, Git, and `curl`:
@@ -64,16 +66,9 @@ readlink DeepLearningExamples/PyTorch/SpeechSynthesis/Tacotron2/__Tacotron2
 
 It should print `.`. Do not use this command if `__Tacotron2` is a real directory containing data; it is intended to replace the small placeholder file in this fork.
 
-## 4. Place model files and configure environment
+## 4. Configure the environment
 
-Put the two checkpoint files in the project `models/` directory:
-
-```text
-models/checkpoint_Tacotron2_1000.pt
-models/univ_c32_AC_2141.pt
-```
-
-Copy the template and review it:
+Download and place the Tacotron2 and UnivNet checkpoints as described in the [model setup guide](model-setup.md). Copy the environment template and review it:
 
 ```bash
 cp .env.example .env
