@@ -46,7 +46,7 @@ For production, set a unique Keycloak bootstrap admin password, restrict the adm
 
 ## Public deployment on the provided IP
 
-The repository also includes a production-mode Keycloak + PostgreSQL stack and a Caddy reverse-proxy config for `138.197.152.248`. This uses a Let's Encrypt IP-address certificate from the short-lived profile (about six days), which Caddy renews automatically. It requires ports 80 and 443 to reach this machine and a recent Caddy version with ACME profile support. See the [Let's Encrypt IP certificate notes](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability) and [Caddy TLS issuer settings](https://caddyserver.com/docs/caddyfile/directives/tls).
+The repository also includes a production-mode Keycloak + PostgreSQL stack and a Caddy reverse-proxy config. This uses a Let's Encrypt IP-address certificate from the short-lived profile (about six days), which Caddy renews automatically. It requires ports 80 and 443 to reach this machine and a recent Caddy version with ACME profile support. See the [Let's Encrypt IP certificate notes](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability) and [Caddy TLS issuer settings](https://caddyserver.com/docs/caddyfile/directives/tls).
 
 Before switching, copy the updated `server.py`, `conversation.py`, `auth.py`, `config/voice_agent_instructions.md`, `keycloak/voice-ai-realm.json`, `docker-compose.public.yml`, and `Caddyfile.public` to the server. Keep the existing dev Keycloak container running until the public setup is verified. The public stack uses a new PostgreSQL database and imports the realm afresh, so create a user again in that new realm (or export/import existing users separately).
 
@@ -72,6 +72,8 @@ sudo systemctl reload caddy
 ```
 
 Allow inbound TCP ports 80 and 443 in the cloud firewall and Ubuntu firewall. Configure the Voice AI server's `.env` like this, then restart it. The app binds only to localhost; Caddy is the public entry point. Set `OAUTH_FORCE_LOOPBACK=true` because the local reverse proxy makes the app see proxied requests as loopback:
+
+Below confix assumes a public IPv4 address of `138.197.152.248` as used by the respective application. 
 
 ```env
 MCP_HOST=127.0.0.1
@@ -110,5 +112,3 @@ Run the health-check script every five minutes from root's crontab (`sudo cronta
 ```
 
 The script appends its activity to `logs/log.txt`, ensures the public Keycloak/PostgreSQL Compose stack is started, starts Caddy if its service is down, and restarts Keycloak or the app only when their health checks fail. The app is checked through `http://127.0.0.1:10001/auth/config`; Keycloak is checked through its local discovery endpoint. systemd and Docker restart policies also recover processes that exit unexpectedly. Inspect the log with `tail -n 100 /root/voice-mcp-server/logs/log.txt`.
-
-The droplet currently has 1 vCPU and 2 GB RAM. Running PyTorch inference, PostgreSQL, and production Keycloak together may still exhaust memory under load; short replies and model caching reduce work but do not guarantee adequate capacity. Watch memory usage and move Keycloak to a separate service or resize the droplet if it continues to restart.
