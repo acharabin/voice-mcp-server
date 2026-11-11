@@ -287,6 +287,7 @@ async def chat_api(request: Request) -> Response:
     principal, auth_error = await authenticate_request(request)
     if auth_error:
         return auth_error
+    provider = "unresolved"
     try:
         payload = await request.json()
         if not isinstance(payload, dict):
@@ -304,6 +305,7 @@ async def chat_api(request: Request) -> Response:
             raise ValueError("Invalid conversation id")
 
         provider = resolve_provider(payload.get("provider"))
+        logger.info("Chat provider selected: %s", provider)
         voice_agent = await asyncio.to_thread(get_voice_agent, provider)
         result = await voice_agent.ainvoke(
             {"messages": [{"role": "user", "content": message}]},
@@ -330,7 +332,8 @@ async def chat_api(request: Request) -> Response:
     except (ValueError, TypeError) as exc:
         return JSONResponse({"error": str(exc)}, status_code=400)
     except Exception as exc:
-        logger.error("Conversational agent failed (%s)", type(exc).__name__)
+        logger.error("Conversational agent failed (provider=%s, error=%s)",
+                     provider, type(exc).__name__)
         return JSONResponse({"error": "The assistant could not respond. Please try again."}, status_code=502)
 
 async def home(_: Request) -> FileResponse:

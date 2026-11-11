@@ -5,20 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Talk with Andrew's Voice</title>
-  <link rel="stylesheet" href="/assets/app.css">
-  <script src="/assets/app.js" defer></script>
+  <link rel="stylesheet" href="/assets/app.css?v=talk-to-1">
+  <script src="/assets/app.js?v=talk-to-1" defer></script>
 </head>
 <body>
   <main class="shell chat-shell">
     <header class="topbar">
       <a class="brand" href="/" aria-label="Andrew's Voice home"><span class="brand-mark">V</span><span>Andrew's Voice</span></a>
       <div class="top-actions">
-        <label for="model-provider">Model</label>
-        <select id="model-provider" aria-label="Text model">
-          <option value="">Server default</option>
-          <option value="openai">OpenAI</option>
-          <option value="qwen">Hosted Qwen</option>
-        </select>
+        <div class="talk-to-picker">
+          <label for="model-provider">Talk to</label>
+          <select id="model-provider">
+            <option value="qwen" selected>Andrew</option>
+            <option value="openai">OpenAI</option>
+          </select>
+        </div>
         <button id="new-chat-button" class="button button-quiet" type="button">New chat</button>
         <button id="auth-button" class="button button-quiet" type="button" hidden>Sign in</button>
       </div>

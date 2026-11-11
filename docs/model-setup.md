@@ -27,7 +27,7 @@ Details on training are in the forked [NVIDIA Tacotron 2 repository](https://git
 
 ## Text model provider
 
-Choose OpenAI or Hosted Qwen in the browser, or pass `provider: "openai"` / `provider: "qwen"` with each request. Switching requires no restart. `TEXT_MODEL_PROVIDER` sets the startup default for browser requests; MCP `generate_reply` defaults to OpenAI when its provider is omitted.
+The browser's **Talk to** selector offers **Andrew** (hosted Qwen, selected by default) and **OpenAI**. It remembers your choice through sign-in and page reloads. API clients can pass `provider: "openai"` / `provider: "qwen"` with each request. Switching requires no restart. `TEXT_MODEL_PROVIDER` sets the fallback for `/api/chat` requests that omit a provider; the browser always sends its selection. MCP `generate_reply` defaults to OpenAI when its provider is omitted.
 
 OpenAI uses `AGENT_MODEL` and `OPENAI_API_KEY`. Qwen calls an OpenAI-compatible hosted Chat Completions endpoint using its own URL, key, and served model name. The droplet does not load Qwen weights or need Transformers/PEFT. Speech synthesis still uses local Tacotron2 and UnivNet. OpenAI moderation runs only for the OpenAI provider.
 

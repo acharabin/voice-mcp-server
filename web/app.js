@@ -7,6 +7,12 @@ const counter = document.querySelector("#count");
 const statusLine = document.querySelector("#status");
 const messages = document.querySelector("#messages");
 const accountLabel = document.querySelector("#account-label");
+const modelProvider = document.querySelector("#model-provider");
+const savedProvider = sessionStorage.getItem("voice_model_provider");
+modelProvider.value = savedProvider === "openai" ? "openai" : "qwen";
+modelProvider.addEventListener("change", () => {
+  sessionStorage.setItem("voice_model_provider", modelProvider.value);
+});
 let config;
 let accessToken = null;
 let authRequired = true;
@@ -22,6 +28,7 @@ function setStatus(message, kind = "") {
 function updateControls() {
   sendButton.disabled = sending || !textarea.value.trim() || textarea.value.length > 2000 || (authRequired && !accessToken);
   newChatButton.disabled = sending;
+  modelProvider.disabled = sending;
 }
 
 function base64Url(bytes) {
@@ -163,7 +170,7 @@ form.addEventListener("submit", async (event) => {
       method: "POST",
       headers: authHeaders(true),
       body: JSON.stringify({ message, conversation_id: conversationId,
-        provider: document.getElementById("model-provider").value || null }),
+        provider: modelProvider.value }),
     });
     if (!chatResponse.ok) throw new Error(await readError(chatResponse));
     const result = await chatResponse.json();
