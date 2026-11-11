@@ -13,6 +13,12 @@
     <header class="topbar">
       <a class="brand" href="/" aria-label="Andrew's Voice home"><span class="brand-mark">V</span><span>Andrew's Voice</span></a>
       <div class="top-actions">
+        <label for="model-provider">Model</label>
+        <select id="model-provider" aria-label="Text model">
+          <option value="">Server default</option>
+          <option value="openai">OpenAI</option>
+          <option value="qwen">Hosted Qwen</option>
+        </select>
         <button id="new-chat-button" class="button button-quiet" type="button">New chat</button>
         <button id="auth-button" class="button button-quiet" type="button" hidden>Sign in</button>
       </div>

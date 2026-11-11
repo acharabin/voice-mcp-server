@@ -58,7 +58,7 @@ from starlette.staticfiles import StaticFiles
 from auth import OIDCTokenVerifier
 from DeepLearningExamples.PyTorch.SpeechSynthesis.Tacotron2 import inference
 from config.config import args, parser
-from conversation import create_voice_agent
+from conversation import get_voice_agent, resolve_provider
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +108,6 @@ class AudioSamples(BaseModel):
 
 
 mcp = MCPServer("Public Voice MCP", **({"token_verifier": verifier, "auth": mcp_auth} if OAUTH_REQUIRED else {}))
-voice_agent = create_voice_agent()
 _inference_lock = threading.Lock()
 _model_cache_lock = threading.Lock()
 _model_cache = {}
@@ -264,6 +263,26 @@ async def voice_api(request: Request) -> Response:
         return JSONResponse({"error": str(exc)}, status_code=400)
 
 
+@mcp.tool()
+async def generate_reply(message: str, provider: str = "openai") -> str:
+    """Generate a text reply with OpenAI or hosted Qwen. Each call is independent.
+
+    For speech, pass the returned reply to text_to_audio_player.
+    """
+    if not message.strip() or len(message) > 2000:
+        raise ValueError("Message must contain 1 to 2000 characters")
+    agent = await asyncio.to_thread(get_voice_agent, provider)
+    thread_id = f"mcp:{secrets.token_urlsafe(24)}"
+    try:
+        result = await agent.ainvoke(
+            {"messages": [{"role": "user", "content": message.strip()}]},
+            config={"configurable": {"thread_id": thread_id}},
+        )
+        return result["messages"][-1].text
+    finally:
+        await agent.checkpointer.adelete_thread(thread_id)
+
+
 async def chat_api(request: Request) -> Response:
     principal, auth_error = await authenticate_request(request)
     if auth_error:
@@ -284,6 +303,8 @@ async def chat_api(request: Request) -> Response:
         if not isinstance(conversation_id, str) or not conversation_id or len(conversation_id) > 128:
             raise ValueError("Invalid conversation id")
 
+        provider = resolve_provider(payload.get("provider"))
+        voice_agent = await asyncio.to_thread(get_voice_agent, provider)
         result = await voice_agent.ainvoke(
             {"messages": [{"role": "user", "content": message}]},
             config={"configurable": {"thread_id": f"{principal}:{conversation_id}"}},

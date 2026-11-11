@@ -162,7 +162,8 @@ form.addEventListener("submit", async (event) => {
     const chatResponse = await fetch("/api/chat", {
       method: "POST",
       headers: authHeaders(true),
-      body: JSON.stringify({ message, conversation_id: conversationId }),
+      body: JSON.stringify({ message, conversation_id: conversationId,
+        provider: document.getElementById("model-provider").value || null }),
     });
     if (!chatResponse.ok) throw new Error(await readError(chatResponse));
     const result = await chatResponse.json();

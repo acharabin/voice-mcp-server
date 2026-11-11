@@ -10,7 +10,7 @@ Open this URL in a browser to use the chat interface. Sign in through Keycloak, 
 
 The browser app uses OAuth Authorization Code + PKCE. Its backend routes are `/api/chat` for assistant replies and `/api/voice` for speech generation. The OpenAI API key stays on the server. Remote requests require an access token from the configured issuer with the expected audience and `voice:generate` scope.
 
-For local development, keep `MCP_HOST=127.0.0.1`, run `uv sync` and `uv run python server.py`, then open [http://127.0.0.1:10000/](http://127.0.0.1:10000/). Assistant replies require `OPENAI_API_KEY` in the server's `.env` file.
+For local development, keep `MCP_HOST=127.0.0.1`, run `uv sync` and `uv run python server.py`, then open [http://127.0.0.1:10000/](http://127.0.0.1:10000/). Choose `TEXT_MODEL_PROVIDER=openai` or `qwen` in `.env`; see the [model setup guide](docs/model-setup.md) for local Qwen setup. OpenAI requires `OPENAI_API_KEY`.
 
 ## MCP endpoint
 
@@ -28,4 +28,4 @@ The public IP deployment uses HTTPS through Caddy. Caddy accepts public traffic 
 
 For deployment steps, production Keycloak/PostgreSQL setup, and OAuth client settings, see the [Keycloak OAuth setup](docs/keycloak-setup.md). For Ubuntu installation and starting the server, see the [Ubuntu startup guide](docs/ubuntu-startup-guide.md); model downloads, checkpoint paths, and inference details are in the [model setup guide](docs/model-setup.md).
 
-Conversation history is stored in process memory and resets when the server restarts. OpenAI moderation checks input and output; the OpenAI API key remains server-side and must never be added to browser code.
+Conversation history is stored in process memory and resets when the server restarts. With the OpenAI provider, moderation checks input and output; the OpenAI API key remains server-side and must never be added to browser code.

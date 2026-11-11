@@ -1,5 +1,5 @@
 __pycache__
-test/
+tests/
 .env
 .env.keycloak
 .env.public
@@ -7,3 +7,4 @@ test/
 models/
 DeepLearningExamples/
 /logs/
+qlora-persona-clone/

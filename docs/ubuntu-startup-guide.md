@@ -81,8 +81,8 @@ MCP_HOST=127.0.0.1
 MCP_PORT=10000
 MCP_SERVER_URL=http://127.0.0.1:10000/mcp
 PYTHONPATH=src:DeepLearningExamples/PyTorch/SpeechSynthesis/Tacotron2
-TACOTRON2_CHECKPOINT=models/checkpoint_Tacotron2_1000.pt
-UNIVNET_CHECKPOINT=models/univ_c32_AC_2141.pt
+TACOTRON2_CHECKPOINT=models/voice/checkpoint_Tacotron2_1000.pt
+UNIVNET_CHECKPOINT=models/voice/univ_c32_AC_2141.pt
 ```
 
 Leave the OAuth values blank for loopback use. The server intentionally refuses to bind to a non-loopback address without OAuth settings. When configured, OAuth is required for remote clients, while requests from the same machine over loopback stay exempt. For remote access, configure OAuth and HTTPS before changing `MCP_HOST` to `0.0.0.0`; see the authentication section in the [README](../README.md).
