@@ -39,7 +39,8 @@ def create_voice_agent(provider=None):
     provider = resolve_provider(provider)
     if provider == "qwen":
         settings = {name: os.getenv(name, "").strip() for name in
-                    ("QWEN_BASE_URL", "QWEN_API_KEY", "QWEN_MODEL")}
+                    ("QWEN_BASE_URL", "QWEN_API_KEY")}
+        settings["QWEN_MODEL"] = os.getenv("QWEN_MODEL", "").strip() or "persona"
         missing = [name for name, value in settings.items() if not value]
         if missing:
             raise ValueError(f"Hosted Qwen requires: {', '.join(missing)}")

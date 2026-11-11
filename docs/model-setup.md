@@ -42,12 +42,12 @@ OpenAI uses `AGENT_MODEL` and `OPENAI_API_KEY`. Qwen calls an OpenAI-compatible 
 TEXT_MODEL_PROVIDER=openai
 QWEN_BASE_URL=https://api.runpod.ai/v2/YOUR_ENDPOINT_ID/openai/v1
 QWEN_API_KEY=your-runpod-issued-key
-QWEN_MODEL=your-account/your-merged-persona-model
+QWEN_MODEL=persona
 QWEN_MAX_NEW_TOKENS=256
 QWEN_TIMEOUT_SECONDS=300
 ```
 
-`QWEN_MODEL` must match the endpoint's served model name (or served LoRA adapter name), not the endpoint ID. It can be checked with the endpoint's authenticated `/models` API. The client requests non-thinking responses using vLLM's `chat_template_kwargs`.
+`QWEN_MODEL` defaults to `persona` when omitted or blank. Override it if your endpoint uses a different served model or LoRA adapter name. This is not the endpoint ID. It can be checked with the endpoint's authenticated `/models` API. The client requests non-thinking responses using vLLM's `chat_template_kwargs`.
 
 Restart once after configuring credentials or deploying code. Models/clients are initialized lazily and cached; subsequent provider switches require no restart. A first request after the worker scales to zero can be slow. Automatic client retries are disabled to avoid repeating inference after a timeout. Set the minimum worker count to zero for scale-to-zero and cap maximum workers to control concurrency/cost; keeping a worker warm trades idle charges for lower latency.
 
