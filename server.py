@@ -58,7 +58,7 @@ from starlette.staticfiles import StaticFiles
 from auth import OIDCTokenVerifier
 from DeepLearningExamples.PyTorch.SpeechSynthesis.Tacotron2 import inference
 from config.config import args, parser
-from conversation import get_voice_agent, resolve_provider
+from conversation import get_voice_agent, resolve_provider, invoke_voice_agent
 
 logger = logging.getLogger(__name__)
 
@@ -271,13 +271,11 @@ async def generate_reply(message: str, provider: str = "openai") -> str:
     """
     if not message.strip() or len(message) > 2000:
         raise ValueError("Message must contain 1 to 2000 characters")
+    provider = resolve_provider(provider)
     agent = await asyncio.to_thread(get_voice_agent, provider)
     thread_id = f"mcp:{secrets.token_urlsafe(24)}"
     try:
-        result = await agent.ainvoke(
-            {"messages": [{"role": "user", "content": message.strip()}]},
-            config={"configurable": {"thread_id": thread_id}},
-        )
+        result = await invoke_voice_agent(agent, message.strip(), provider, thread_id)
         return result["messages"][-1].text
     finally:
         await agent.checkpointer.adelete_thread(thread_id)
@@ -307,9 +305,8 @@ async def chat_api(request: Request) -> Response:
         provider = resolve_provider(payload.get("provider"))
         logger.info("Chat provider selected: %s", provider)
         voice_agent = await asyncio.to_thread(get_voice_agent, provider)
-        result = await voice_agent.ainvoke(
-            {"messages": [{"role": "user", "content": message}]},
-            config={"configurable": {"thread_id": f"{principal}:{conversation_id}"}},
+        result = await invoke_voice_agent(
+            voice_agent, message, provider, f"{principal}:{conversation_id}",
         )
         content = result["messages"][-1].content
         if isinstance(content, list):
@@ -323,7 +320,7 @@ async def chat_api(request: Request) -> Response:
         reply = " ".join(raw_parts).strip()
         if not reply:
             raise RuntimeError("The assistant returned an empty response")
-        if len(reply) > MAX_ASSISTANT_REPLY_CHARS:
+        if provider == "openai" and len(reply) > MAX_ASSISTANT_REPLY_CHARS:
             shortened = reply[:MAX_ASSISTANT_REPLY_CHARS - 3]
             if " " in shortened:
                 shortened = shortened.rsplit(" ", 1)[0]

@@ -16,6 +16,19 @@ ROOT = Path(__file__).resolve().parent
 INSTRUCTIONS_FILE = ROOT / "config" / "voice_agent_instructions.md"
 _agents = {}
 _agents_lock = threading.Lock()
+INITIAL_GREETING = "Hi, I'm here. What would you like to talk about?"
+
+
+async def invoke_voice_agent(agent, message, provider, thread_id):
+    """Include the visible Andrew greeting once in each model conversation."""
+    config = {"configurable": {"thread_id": thread_id}}
+    messages = []
+    if provider == "qwen":
+        state = await agent.aget_state(config)
+        if not state.values.get("messages"):
+            messages.append({"role": "assistant", "content": INITIAL_GREETING})
+    messages.append({"role": "user", "content": message})
+    return await agent.ainvoke({"messages": messages}, config=config)
 
 
 def get_voice_agent(provider=None):
@@ -48,11 +61,14 @@ def create_voice_agent(provider=None):
             base_url=settings["QWEN_BASE_URL"].rstrip("/"),
             api_key=settings["QWEN_API_KEY"],
             model=settings["QWEN_MODEL"],
-            max_tokens=int(os.getenv("QWEN_MAX_NEW_TOKENS", "256")),
+            temperature=0,
             timeout=float(os.getenv("QWEN_TIMEOUT_SECONDS", "300")),
             max_retries=0,
             use_responses_api=False,
-            extra_body={"chat_template_kwargs": {"enable_thinking": False}},
+            extra_body={
+                "max_tokens": int(os.getenv("QWEN_MAX_NEW_TOKENS", "200")),
+                "chat_template_kwargs": {"enable_thinking": False},
+            },
         )
     elif provider == "openai":
         if not os.getenv("OPENAI_API_KEY"):
@@ -60,7 +76,9 @@ def create_voice_agent(provider=None):
         model = init_chat_model(os.getenv("AGENT_MODEL", "openai:gpt-4.1-mini"))
     else:
         raise ValueError("TEXT_MODEL_PROVIDER must be 'openai' or 'qwen'")
-    system_prompt = INSTRUCTIONS_FILE.read_text(encoding="utf-8")
+    # The persona adapter was trained on user/assistant turns. Do not override
+    # its learned personal answers with the generic assistant's system prompt.
+    system_prompt = INSTRUCTIONS_FILE.read_text(encoding="utf-8") if provider == "openai" else None
     middleware = [
         OpenAIModerationMiddleware(
             model="omni-moderation-latest",

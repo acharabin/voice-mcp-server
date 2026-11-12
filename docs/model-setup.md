@@ -43,7 +43,7 @@ TEXT_MODEL_PROVIDER=openai
 QWEN_BASE_URL=https://api.runpod.ai/v2/YOUR_ENDPOINT_ID/openai/v1
 QWEN_API_KEY=your-runpod-issued-key
 QWEN_MODEL=persona
-QWEN_MAX_NEW_TOKENS=256
+QWEN_MAX_NEW_TOKENS=200
 QWEN_TIMEOUT_SECONDS=300
 ```
 
@@ -56,6 +56,8 @@ The browser and MCP client never receive the Runpod key. They authenticate to th
 See the [Runpod vLLM worker setup](https://github.com/runpod-workers/worker-vllm) and [Runpod credential permissions](https://docs.runpod.io/get-started/credentials).
 
 ### Test through MCP
+
+Qwen uses `temperature=0`, `max_tokens=200` by default, and `enable_thinking=false`, with no generic assistant system prompt. Its first turn includes the visible greeting as an assistant message, matching the Runpod test. Subsequent turns retain that greeting and the conversation history without adding it again. Set `QWEN_MAX_NEW_TOKENS=200` in an existing `.env` to match the test limit. Andrew's displayed reply is not subject to the OpenAI assistant's 99-character shortening; voice synthesis still has a 1200-character input limit. OpenAI retains the assistant instructions and moderation. Browser requests include conversation history: use **New chat** when comparing with a single-turn Runpod test, and match the served model, messages, thinking setting, and generation parameters. Greedy decoding reduces sampling variation but does not guarantee identical output across different serving configurations.
 
 Call `generate_reply` with:
 
