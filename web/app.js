@@ -167,6 +167,26 @@ async function readError(response) {
   return error.error || "The request could not be completed.";
 }
 
+function showReplyProgress(pending, isAndrew) {
+  if (!isAndrew) return () => {};
+  const update = (message, status) => {
+    pending.content.querySelector("p").textContent = message;
+    setStatus(status);
+  };
+  const wakeTimer = setTimeout(() => update(
+    "Andrew may be waking up after some time away. This can take a minute or two.",
+    "Waiting for Andrew — the first reply after a break can take longer.",
+  ), 8000);
+  const waitTimer = setTimeout(() => update(
+    "Still waiting for Andrew. The server may need more time to get ready; your message is still being processed.",
+    "Still waiting — no need to send your message again.",
+  ), 45000);
+  return () => {
+    clearTimeout(wakeTimer);
+    clearTimeout(waitTimer);
+  };
+}
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const message = textarea.value.trim();
@@ -179,6 +199,7 @@ form.addEventListener("submit", async (event) => {
   const pending = appendMessage("assistant", "Thinking...");
   let assistantReplyReceived = false;
   setStatus("Thinking...");
+  const stopReplyProgress = showReplyProgress(pending, modelProvider.value === "qwen");
 
   try {
     const chatResponse = await fetch("/api/chat", {
@@ -189,6 +210,7 @@ form.addEventListener("submit", async (event) => {
     });
     if (!chatResponse.ok) throw new Error(await readError(chatResponse));
     const result = await chatResponse.json();
+    stopReplyProgress();
     conversationId = result.conversation_id;
     sessionStorage.setItem("voice_conversation_id", conversationId);
     pending.content.querySelector("p").textContent = result.reply;
@@ -216,6 +238,7 @@ form.addEventListener("submit", async (event) => {
       setStatus("Response ready. Press play to listen.");
     }
   } catch (error) {
+    stopReplyProgress();
     if (assistantReplyReceived) {
       const warning = document.createElement("small");
       warning.className = "speech-error";
@@ -227,6 +250,7 @@ form.addEventListener("submit", async (event) => {
     }
     setStatus(error.message || "Something went wrong.", "error");
   } finally {
+    stopReplyProgress();
     sending = false;
     updateControls();
     textarea.focus();
