@@ -4,15 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <meta name="description" content="Meet Andrew's Clone. Chat with a persona trained on Andrew's words, and hear replies in his synthetic voice.">
+  <meta name="description" content="Chat with Andrew's Clone in text and voice.">
   <title>Andrew's Clone — Text &amp; Voice</title>
-  <link rel="stylesheet" href="/assets/app.css?v=clone-1">
-  <script src="/assets/app.js?v=clone-1" defer></script>
+  <link rel="stylesheet" href="/assets/app.css?v=chat-2">
+  <script src="/assets/app.js?v=chat-2" defer></script>
 </head>
 <body>
   <main class="shell chat-shell">
     <header class="topbar">
-      <a class="brand" href="/" aria-label="Andrew's Clone home"><span class="brand-mark">AC</span><span>Andrew's Clone<small>TEXT &amp; VOICE</small></span></a>
+      <a class="brand" href="/" aria-label="Andrew's Clone home"><span class="brand-mark">AC</span><span>Andrew's Clone</span></a>
       <div class="top-actions">
         <div class="talk-to-picker">
           <label for="model-provider">Talk to</label>
@@ -25,19 +25,7 @@
         <button id="auth-button" class="button button-quiet" type="button" hidden>Sign in</button>
       </div>
     </header>
-    <section class="hero chat-hero">
-      <div class="clone-emblem" aria-hidden="true"><span>AC</span><i></i><i></i><i></i><i></i><i></i></div>
-      <div class="clone-intro">
-        <p class="eyebrow">MEET THE DIGITAL ANDREW</p>
-        <h1>His words.<br>His voice<span>.</span></h1>
-        <p class="intro">A clone trained on Andrew's words, with a synthetic version of his voice. Start a conversation. Read the reply. Hear it, too.</p>
-      </div>
-      <div class="clone-capabilities" aria-label="Clone capabilities">
-        <div><span class="capability-symbol" aria-hidden="true">Aa</span><p><strong>Andrew in text</strong><span>A persona trained to answer in his style.</span></p></div>
-        <div><span class="capability-symbol voice-symbol" aria-hidden="true">ıⅠı</span><p><strong>Andrew in voice</strong><span>Written replies, spoken in his synthetic voice.</span></p></div>
-      </div>
-      <p id="conversation-mode" class="conversation-mode">Talking to Andrew's Clone · Text + voice</p>
-    </section>
+    <p id="conversation-mode" class="conversation-mode">Andrew · Text &amp; voice</p>
     <section id="messages" class="messages" role="log" aria-live="polite" aria-label="Conversation">
       <article class="message message-assistant">
         <div class="message-avatar" aria-hidden="true">AC</div>
@@ -46,10 +34,10 @@
     </section>
     <form id="composer-form" class="composer chat-composer">
       <div class="composer-head"><label for="text-input">Your message</label><span id="count">0 / 2000</span></div>
-      <textarea id="text-input" maxlength="2000" placeholder="Ask Andrew's Clone something..." rows="3" required></textarea>
-      <div class="composer-foot"><span id="status" role="status">Connecting to the conversation...</span><button id="speak-button" class="button button-primary" type="submit" disabled>Send</button></div>
+      <textarea id="text-input" maxlength="2000" placeholder="Write a message..." rows="3" required></textarea>
+      <div class="composer-foot"><span id="status" role="status">Connecting...</span><button id="speak-button" class="button button-primary" type="submit" disabled>Send</button></div>
     </form>
-    <footer><div><strong>A digital clone. A real conversation.</strong><span>AI-generated text and synthetic voice. You're chatting with a model of Andrew, not Andrew himself.</span><span>Chat history is kept in server memory until restart.</span></div><span id="account-label"></span></footer>
+    <footer><span>AI-generated replies · Synthetic voice</span><span id="account-label"></span></footer>
   </main>
 </body>
 </html>

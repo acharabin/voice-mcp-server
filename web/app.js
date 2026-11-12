@@ -17,9 +17,9 @@ modelProvider.addEventListener("change", () => {
 function updateConversationMode() {
   const isAndrew = modelProvider.value === "qwen";
   document.querySelector("#conversation-mode").textContent = isAndrew
-    ? "Talking to Andrew's Clone · Text + voice"
-    : "Talking to OpenAI · Spoken in Andrew's synthetic voice";
-  textarea.placeholder = isAndrew ? "Ask Andrew's Clone something..." : "Ask OpenAI something...";
+    ? "Andrew · Text & voice"
+    : "OpenAI · Andrew's voice";
+  textarea.placeholder = "Write a message...";
   const greeting = messages.querySelector(".message[data-greeting]");
   if (greeting) {
     greeting.querySelector(".message-avatar").textContent = isAndrew ? "AC" : "AI";

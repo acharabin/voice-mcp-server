@@ -15,25 +15,14 @@
 .talk-to-picker option{background:var(--panel);color:#f4f3ef}
 @media(max-width:640px){.topbar{height:auto;min-height:84px;flex-wrap:wrap;gap:14px;padding:18px 0}.top-actions{flex-wrap:wrap}.talk-to-picker{padding:0 10px}.talk-to-picker select{padding-top:10px;padding-bottom:10px}}
 
-/* Andrew's Clone identity: a paired text persona and synthetic voice. */
+/* Keep the identity quiet and give the conversation room. */
 .shell.chat-shell{width:min(880px,calc(100% - 40px));max-width:880px}
-.topbar{min-height:96px;height:auto;gap:18px;padding:20px 0;flex-wrap:wrap}
-.brand-mark{width:40px;height:40px;border-radius:13px;font-size:13px;letter-spacing:-.05em;box-shadow:4px 4px 0 #c6f36a20}
-.brand small{display:block;margin-top:5px;font-size:9px;letter-spacing:.2em;color:var(--muted);font-weight:500}
-.chat-hero{position:relative;padding:48px 0 20px;display:grid;grid-template-columns:1fr 136px;gap:26px 30px;align-items:center}
-.clone-intro{grid-column:1;grid-row:1}
-.chat-hero h1{font-size:clamp(44px,7vw,66px);line-height:1.04}
-.chat-hero .intro{max-width:550px;line-height:1.65;font-size:15px;margin-top:18px}
-.clone-emblem{grid-column:2;grid-row:1;display:flex;align-items:center;justify-content:center;gap:4px;width:136px;height:136px;border:1px solid #52603b;border-radius:36px;background:linear-gradient(145deg,#303e22,#171c14);box-shadow:9px 9px 0 #c6f36a09;transform:rotate(-5deg)}
-.clone-emblem>span{position:absolute;top:27px;font:800 38px Manrope,sans-serif;letter-spacing:-.08em;color:var(--accent)}
-.clone-emblem i{display:block;width:4px;height:10px;background:var(--accent);border-radius:4px;margin-top:62px;opacity:.65}
-.clone-emblem i:nth-of-type(2),.clone-emblem i:nth-of-type(4){height:18px}.clone-emblem i:nth-of-type(3){height:28px}
-.clone-capabilities{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:14px;background:#191c16;overflow:hidden}
-.clone-capabilities>div{display:flex;align-items:center;gap:13px;padding:18px 20px}.clone-capabilities>div+div{border-left:1px solid var(--line)}
-.capability-symbol{display:grid;place-items:center;flex:0 0 36px;height:36px;border:1px solid #414a33;border-radius:10px;color:var(--accent);font:600 16px Manrope,sans-serif}.voice-symbol{letter-spacing:2px}
-.clone-capabilities p{margin:0;line-height:1.5}.clone-capabilities strong{display:block;font-size:13px;font-weight:600}.clone-capabilities p span{display:block;margin-top:3px;color:var(--muted);font-size:12px}
-.conversation-mode{grid-column:1/-1;margin:0;color:var(--muted);font-size:12px;display:flex;align-items:center;gap:8px}.conversation-mode:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
-.messages{min-height:160px}.message-avatar{font-size:10px;letter-spacing:.02em}
-footer{align-items:flex-start;line-height:1.6;padding-top:28px}footer>div{max-width:590px}footer strong{display:block;font-size:11px;color:#a2a39e;font-weight:500;margin-bottom:4px}footer div span{display:block}#account-label{white-space:nowrap}
-@media(max-width:640px){.chat-hero{grid-template-columns:1fr 90px;gap:22px 16px;padding-top:32px}.clone-emblem{width:90px;height:100px;border-radius:25px}.clone-emblem>span{font-size:28px;top:17px}.clone-emblem i{margin-top:43px;width:3px}.clone-emblem i:nth-of-type(3){height:22px}.chat-hero h1{font-size:44px}.chat-hero .intro{font-size:14px}.clone-capabilities>div{padding:14px 12px;gap:10px}.capability-symbol{flex-basis:28px;height:30px;font-size:13px}.clone-capabilities p span{font-size:11px}.top-actions{gap:7px}footer{flex-wrap:wrap}}
-@media(max-width:420px){.chat-hero{grid-template-columns:1fr}.clone-emblem{display:none}.clone-capabilities{grid-template-columns:1fr}.clone-capabilities>div+div{border-left:0;border-top:1px solid var(--line)}.clone-capabilities p span{font-size:12px}}
+.topbar{min-height:84px;height:auto;gap:18px;padding:18px 0;flex-wrap:wrap}
+.brand-mark{width:32px;height:32px;border-radius:10px;font-size:11px;letter-spacing:-.04em}
+.conversation-mode{margin:24px 0 16px;color:var(--muted);font-size:12px;display:flex;align-items:center;gap:8px}
+.conversation-mode:before{content:"";width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.messages{flex:1;min-height:240px;max-height:60vh;padding-top:6px}
+.message-avatar{font-size:10px;letter-spacing:.02em}
+footer{align-items:center;line-height:1.6;padding:20px 0;gap:12px;flex-wrap:wrap}
+#account-label{white-space:nowrap}
+@media(max-width:640px){.topbar{gap:14px;padding:16px 0}.top-actions{gap:7px}.conversation-mode{margin-top:20px}.messages{min-height:200px;max-height:55vh}}
