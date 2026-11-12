@@ -12,7 +12,22 @@ const savedProvider = sessionStorage.getItem("voice_model_provider");
 modelProvider.value = savedProvider === "openai" ? "openai" : "qwen";
 modelProvider.addEventListener("change", () => {
   sessionStorage.setItem("voice_model_provider", modelProvider.value);
+  updateConversationMode();
 });
+function updateConversationMode() {
+  const isAndrew = modelProvider.value === "qwen";
+  document.querySelector("#conversation-mode").textContent = isAndrew
+    ? "Talking to Andrew's Clone · Text + voice"
+    : "Talking to OpenAI · Spoken in Andrew's synthetic voice";
+  textarea.placeholder = isAndrew ? "Ask Andrew's Clone something..." : "Ask OpenAI something...";
+  const greeting = messages.querySelector(".message[data-greeting]");
+  if (greeting) {
+    greeting.querySelector(".message-avatar").textContent = isAndrew ? "AC" : "AI";
+    greeting.querySelector(".message-label").textContent = isAndrew ? "Andrew's Clone" : "OpenAI · Andrew's voice";
+  }
+}
+messages.querySelector(".message")?.setAttribute("data-greeting", "true");
+updateConversationMode();
 let config;
 let accessToken = null;
 let authRequired = true;
@@ -118,12 +133,12 @@ function appendMessage(role, text) {
   const avatar = document.createElement("div");
   avatar.className = "message-avatar";
   avatar.setAttribute("aria-hidden", "true");
-  avatar.textContent = role === "user" ? "You" : "V";
+  avatar.textContent = role === "user" ? "You" : modelProvider.value === "qwen" ? "AC" : "AI";
   const content = document.createElement("div");
   content.className = "message-content";
   const label = document.createElement("span");
   label.className = "message-label";
-  label.textContent = role === "user" ? "You" : "Andrew's voice assistant";
+  label.textContent = role === "user" ? "You" : modelProvider.value === "qwen" ? "Andrew's Clone" : "OpenAI · Andrew's voice";
   const paragraph = document.createElement("p");
   paragraph.textContent = text;
   content.append(label, paragraph);
@@ -192,7 +207,7 @@ form.addEventListener("submit", async (event) => {
     player.controls = true;
     player.preload = "metadata";
     player.src = audioUrl;
-    player.setAttribute("aria-label", "Listen to the assistant response");
+    player.setAttribute("aria-label", "Listen to this reply in Andrew's synthetic voice");
     pending.content.append(player);
     try {
       await player.play();
@@ -238,7 +253,7 @@ newChatButton.addEventListener("click", () => {
   for (const url of audioUrls) URL.revokeObjectURL(url);
   audioUrls.length = 0;
   messages.replaceChildren();
-  appendMessage("assistant", "Hi, I'm here. What would you like to talk about?");
+  appendMessage("assistant", "Hi, I'm here. What would you like to talk about?").article.dataset.greeting = "true";
   setStatus(authRequired && !accessToken ? "Sign in to start chatting." : "New conversation ready.");
 });
 
