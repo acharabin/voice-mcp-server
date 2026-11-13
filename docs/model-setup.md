@@ -55,6 +55,14 @@ The browser and MCP client never receive the Runpod key. They authenticate to th
 
 See the [Runpod vLLM worker setup](https://github.com/runpod-workers/worker-vllm) and [Runpod credential permissions](https://docs.runpod.io/get-started/credentials).
 
+### Andrew's factual context
+
+The project-root `andrew-context.md` is included as reference context only in Qwen's system prompt. Qwen answers as Andrew's AI clone using these facts and its trained style, without assuming the person chatting is Andrew. OpenAI keeps its existing assistant instructions and does not receive this profile. This adds prompt context, not retraining or changes to Runpod's model weights. Direct Runpod tests will need the same system context to compare outputs.
+
+Deploy `andrew-context.md` alongside `conversation.py` on the droplet. Qwen reads it when first initialized and caches its prompt, so restart `voice-ai` after editing it; **New chat** gives a clean comparison. If the file is missing or empty, existing behavior is preserved. The context stays outside the web assets, but its contents are sent to the Qwen inference endpoint and can be used in answers.
+
+Useful optional additions: core values, a few personal stories, current projects and goals with an "as of" date, preferred answers to common personal questions, and explicit topics the clone should keep private. Unknown facts should stay unknown rather than being filled in by the model.
+
 ### Test through MCP
 
 Qwen uses `temperature=0`, `max_tokens=200` by default, and `enable_thinking=false`, with no generic assistant system prompt. Its first turn includes the visible greeting as an assistant message, matching the Runpod test. Subsequent turns retain that greeting and the conversation history without adding it again. Set `QWEN_MAX_NEW_TOKENS=200` in an existing `.env` to match the test limit. Andrew's displayed reply is not subject to the OpenAI assistant's 99-character shortening; voice synthesis still has a 1200-character input limit. OpenAI retains the assistant instructions and moderation. Browser requests include conversation history: use **New chat** when comparing with a single-turn Runpod test, and match the served model, messages, thinking setting, and generation parameters. Greedy decoding reduces sampling variation but does not guarantee identical output across different serving configurations.

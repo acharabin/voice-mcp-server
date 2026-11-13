@@ -8,10 +8,9 @@ const statusLine = document.querySelector("#status");
 const messages = document.querySelector("#messages");
 const accountLabel = document.querySelector("#account-label");
 const modelProvider = document.querySelector("#model-provider");
-const savedProvider = sessionStorage.getItem("voice_model_provider");
-modelProvider.value = savedProvider === "openai" ? "openai" : "qwen";
+modelProvider.value = ChatSession.provider();
 modelProvider.addEventListener("change", () => {
-  sessionStorage.setItem("voice_model_provider", modelProvider.value);
+  ChatSession.provider(modelProvider.value);
   updateConversationMode();
 });
 function updateConversationMode() {
@@ -32,8 +31,52 @@ let config;
 let accessToken = null;
 let authRequired = true;
 let sending = false;
-let conversationId = sessionStorage.getItem("voice_conversation_id");
+let conversationId = null;
+let conversationOwner = null;
+let transcript = [];
 const audioUrls = [];
+
+function saveConversation() {
+  if (conversationOwner) ChatSession.save(conversationOwner, {
+    id: conversationId, turns: transcript, draft: textarea.value,
+  });
+}
+
+function restoreConversation() {
+  conversationOwner = ChatSession.owner(config, accessToken);
+  const saved = ChatSession.load(conversationOwner);
+  conversationId = saved?.id || null;
+  transcript = saved?.turns || [];
+  textarea.value = saved?.draft || "";
+  counter.textContent = `${textarea.value.length} / 2000`;
+  for (const url of audioUrls) URL.revokeObjectURL(url);
+  audioUrls.length = 0;
+  messages.replaceChildren();
+  showGreeting();
+  for (const turn of transcript) appendMessage(turn.role, turn.text, turn.provider);
+}
+
+function showGreeting() {
+  appendMessage("assistant", "Hi, I'm here. What would you like to talk about?").article.dataset.greeting = "true";
+}
+
+function clearSignIn() {
+  saveConversation();
+  ChatSession.auth(config, null);
+  accessToken = null;
+  conversationOwner = null;
+  conversationId = null;
+  transcript = [];
+  textarea.value = "";
+  counter.textContent = "0 / 2000";
+  messages.replaceChildren();
+  showGreeting();
+  for (const url of audioUrls) URL.revokeObjectURL(url);
+  audioUrls.length = 0;
+  authButton.textContent = "Sign in";
+  accountLabel.textContent = "";
+  updateControls();
+}
 
 function setStatus(message, kind = "") {
   statusLine.textContent = message;
@@ -44,6 +87,7 @@ function updateControls() {
   sendButton.disabled = sending || !textarea.value.trim() || textarea.value.length > 2000 || (authRequired && !accessToken);
   newChatButton.disabled = sending;
   modelProvider.disabled = sending;
+  authButton.disabled = sending;
 }
 
 function base64Url(bytes) {
@@ -66,6 +110,7 @@ async function discover() {
 
 async function signIn() {
   try {
+    saveConversation();
     setStatus("Preparing secure sign-in...");
     const metadata = await discover();
     const verifier = randomVerifier();
@@ -121,24 +166,29 @@ async function finishSignIn() {
     throw new Error(tokenResponse.error_description || "Token exchange failed.");
   }
   accessToken = tokenResponse.access_token;
+  ChatSession.auth(config, {
+    token: accessToken,
+    expiresAt: Date.now() + Number(tokenResponse.expires_in || 0) * 1000,
+  });
+  restoreConversation();
   authButton.textContent = "Sign out";
   accountLabel.textContent = "Signed in";
   setStatus("Signed in. You can start chatting.");
   updateControls();
 }
 
-function appendMessage(role, text) {
+function appendMessage(role, text, provider = modelProvider.value) {
   const article = document.createElement("article");
   article.className = `message message-${role}`;
   const avatar = document.createElement("div");
   avatar.className = "message-avatar";
   avatar.setAttribute("aria-hidden", "true");
-  avatar.textContent = role === "user" ? "You" : modelProvider.value === "qwen" ? "AC" : "AI";
+  avatar.textContent = role === "user" ? "You" : provider === "qwen" ? "AC" : "AI";
   const content = document.createElement("div");
   content.className = "message-content";
   const label = document.createElement("span");
   label.className = "message-label";
-  label.textContent = role === "user" ? "You" : modelProvider.value === "qwen" ? "Andrew's Clone" : "OpenAI · Andrew's voice";
+  label.textContent = role === "user" ? "You" : provider === "qwen" ? "Andrew's Clone" : "OpenAI · Andrew's voice";
   const paragraph = document.createElement("p");
   paragraph.textContent = text;
   content.append(label, paragraph);
@@ -157,10 +207,7 @@ function authHeaders(json = false) {
 
 async function readError(response) {
   if (response.status === 401) {
-    accessToken = null;
-    authButton.textContent = "Sign in";
-    accountLabel.textContent = "";
-    updateControls();
+    clearSignIn();
     return "Your sign-in expired. Sign in again to continue.";
   }
   const error = await response.json().catch(() => ({}));
@@ -194,8 +241,11 @@ form.addEventListener("submit", async (event) => {
   sending = true;
   updateControls();
   appendMessage("user", message);
+  const provider = modelProvider.value;
+  transcript.push({ role: "user", text: message, provider });
   textarea.value = "";
   counter.textContent = "0 / 2000";
+  saveConversation();
   const pending = appendMessage("assistant", "Thinking...");
   let assistantReplyReceived = false;
   setStatus("Thinking...");
@@ -212,7 +262,8 @@ form.addEventListener("submit", async (event) => {
     const result = await chatResponse.json();
     stopReplyProgress();
     conversationId = result.conversation_id;
-    sessionStorage.setItem("voice_conversation_id", conversationId);
+    transcript.push({ role: "assistant", text: result.reply, provider });
+    saveConversation();
     pending.content.querySelector("p").textContent = result.reply;
     assistantReplyReceived = true;
     setStatus("Preparing the spoken response...");
@@ -258,26 +309,28 @@ form.addEventListener("submit", async (event) => {
 });
 
 textarea.addEventListener("input", () => {
+  saveConversation();
   counter.textContent = `${textarea.value.length} / 2000`;
   updateControls();
 });
 
 authButton.addEventListener("click", () => {
   if (!accessToken) return signIn();
-  accessToken = null;
-  authButton.textContent = "Sign in";
-  accountLabel.textContent = "";
+  clearSignIn();
   setStatus("Signed out.");
   updateControls();
 });
 
 newChatButton.addEventListener("click", () => {
   conversationId = null;
-  sessionStorage.removeItem("voice_conversation_id");
+  transcript = [];
+  textarea.value = "";
+  counter.textContent = "0 / 2000";
+  saveConversation();
   for (const url of audioUrls) URL.revokeObjectURL(url);
   audioUrls.length = 0;
   messages.replaceChildren();
-  appendMessage("assistant", "Hi, I'm here. What would you like to talk about?").article.dataset.greeting = "true";
+  showGreeting();
   setStatus(authRequired && !accessToken ? "Sign in to start chatting." : "New conversation ready.");
 });
 
@@ -289,6 +342,13 @@ newChatButton.addEventListener("click", () => {
     authRequired = config.authRequired;
     if (authRequired) {
       authButton.hidden = false;
+      accessToken = ChatSession.auth(config);
+      if (accessToken) {
+        restoreConversation();
+        authButton.textContent = "Sign out";
+        accountLabel.textContent = "Signed in";
+        setStatus("Ready.");
+      }
       if (window.location.search.includes("error=")) {
         const query = new URLSearchParams(window.location.search);
         throw new Error(query.get("error_description") || query.get("error"));
@@ -296,6 +356,7 @@ newChatButton.addEventListener("click", () => {
       await finishSignIn();
       if (!accessToken) setStatus("Sign in to start chatting.");
     } else {
+      restoreConversation();
       authButton.hidden = true;
       setStatus("Ready. Start a conversation.");
     }
@@ -304,3 +365,5 @@ newChatButton.addEventListener("click", () => {
     setStatus(error.message || "The app could not initialize.", "error");
   }
 })();
+
+window.addEventListener("pagehide", saveConversation);
