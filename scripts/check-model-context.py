@@ -23,6 +23,15 @@ class ContextTests(unittest.IsolatedAsyncioTestCase):
         context_patch = patch.object(conversation, "CONTEXT_FILE", self.context_file)
         context_patch.start()
         self.addCleanup(context_patch.stop)
+        portfolio_patch = patch.object(conversation, "PORTFOLIO_FILE", Path(self.directory.name) / "portfolio.md")
+        portfolio_patch.start()
+        self.addCleanup(portfolio_patch.stop)
+
+    def test_portfolio_is_included_only_for_qwen_even_without_personal_file(self):
+        conversation.PORTFOLIO_FILE.write_text("Project: A factual portfolio example", encoding="utf-8")
+        self.context_file.unlink()
+        self.assertIn("A factual portfolio example", conversation.build_system_prompt("qwen"))
+        self.assertNotIn("A factual portfolio example", conversation.build_system_prompt("openai"))
 
     def test_only_qwen_receives_personal_context(self):
         qwen = conversation.build_system_prompt("qwen")
@@ -69,12 +78,19 @@ class ContextTests(unittest.IsolatedAsyncioTestCase):
                 "LANGSMITH_TRACING": "false",
             }, clear=True), patch.object(conversation, "ChatOpenAI", side_effect=model):
                 agent = conversation.create_voice_agent("qwen")
-                reply = await conversation.invoke_voice_agent(agent, "Your favourite colour?", "qwen", "context-test")
+                with patch.object(conversation, "current_date", return_value="2026-11-13"):
+                    reply = await conversation.invoke_voice_agent(agent, "Your favourite colour?", "qwen", "context-test")
                 self.assertEqual(reply["messages"][-1].content, "Blue.")
-        self.assertEqual(len(requests), 1)
+                with patch.object(conversation, "current_date", return_value="2026-11-14"):
+                    await conversation.invoke_voice_agent(agent, "And today?", "qwen", "context-test")
+        self.assertEqual(len(requests), 2)
         body = requests[0]
         self.assertEqual([m["role"] for m in body["messages"]], ["system", "assistant", "user"])
         self.assertIn("Favourite colour: Blue", body["messages"][0]["content"])
+        self.assertIn("Current date in America/Toronto: 2026-11-13", body["messages"][0]["content"])
+        next_prompt = requests[1]["messages"][0]["content"]
+        self.assertIn("2026-11-14", next_prompt)
+        self.assertNotIn("2026-11-13", next_prompt)
         self.assertEqual(body["messages"][1]["content"], conversation.INITIAL_GREETING)
         self.assertEqual(body["temperature"], 0)
         self.assertEqual(body["model"], "persona")

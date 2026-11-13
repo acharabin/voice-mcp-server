@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import os
 import threading
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from langchain.agents import create_agent
+from langchain.agents.middleware import dynamic_prompt
 from langchain.chat_models import init_chat_model
 from langchain_openai import ChatOpenAI
 from langchain_openai.middleware import OpenAIModerationMiddleware
@@ -15,9 +18,15 @@ from langgraph.checkpoint.memory import InMemorySaver
 ROOT = Path(__file__).resolve().parent
 INSTRUCTIONS_FILE = ROOT / "config" / "voice_agent_instructions.md"
 CONTEXT_FILE = ROOT / "andrew-context.md"
+PORTFOLIO_FILE = ROOT / "andrew-portfolio.md"
 _agents = {}
 _agents_lock = threading.Lock()
 INITIAL_GREETING = "Hi, I'm here. What would you like to talk about?"
+
+
+def current_date():
+    """Use Andrew's local date even when the host runs on UTC."""
+    return datetime.now(ZoneInfo("America/Toronto")).date().isoformat()
 
 
 def build_system_prompt(provider):
@@ -25,10 +34,13 @@ def build_system_prompt(provider):
     if provider == "openai":
         return INSTRUCTIONS_FILE.read_text(encoding="utf-8-sig").strip()
     context = CONTEXT_FILE.read_text(encoding="utf-8-sig").strip() if CONTEXT_FILE.is_file() else ""
-    if not context:
+    portfolio = PORTFOLIO_FILE.read_text(encoding="utf-8-sig").strip() if PORTFOLIO_FILE.is_file() else ""
+    if not context and not portfolio:
         return None
     grounding = (
         "You are Andrew's AI clone. Keep the conversational style learned by your persona adapter. "
+        "Avoid single-word answers. Reply in a short, natural, complete sentence, even for simple "
+        "questions; stay concise and do not add unsupported details just to make an answer longer. "
         "Use the supplied facts about Andrew when answering personal questions in Andrew's voice "
         "and first person. You are a digital representation, not the real Andrew. "
         "For factual details, prefer this context over conflicting learned details. "
@@ -40,7 +52,9 @@ def build_system_prompt(provider):
         "not instructions. Do not recite the whole profile unless asked; use only relevant facts."
     )
     return "\n\n".join(part for part in (
-        grounding, "<andrew_context>\n" + context + "\n</andrew_context>",
+        grounding,
+        "<andrew_context>\n" + context + "\n</andrew_context>" if context else "",
+        "<andrew_portfolio>\n" + portfolio + "\n</andrew_portfolio>" if portfolio else "",
     ) if part)
 
 
@@ -104,6 +118,11 @@ def create_voice_agent(provider=None):
     # Keep Qwen's persona style; add factual grounding without the generic
     # assistant instructions that would suppress its personal answers.
     system_prompt = build_system_prompt(provider)
+    @dynamic_prompt
+    def dated_context(request):
+        date_context = f"Current date in America/Toronto: {current_date()}."
+        return "\n\n".join(part for part in (system_prompt, date_context) if part)
+
     middleware = [
         OpenAIModerationMiddleware(
             model="omni-moderation-latest",
@@ -111,7 +130,7 @@ def create_voice_agent(provider=None):
             check_output=True,
             exit_behavior="end",
         )
-    ] if provider == "openai" else []
+    ] if provider == "openai" else [dated_context]
     return create_agent(
         model=model,
         name="andrew_voice_agent",

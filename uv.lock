@@ -2055,6 +2055,7 @@ dependencies = [
     { name = "requests" },
     { name = "starlette" },
     { name = "torch" },
+    { name = "tzdata", marker = "sys_platform == 'win32'" },
     { name = "uvicorn" },
 ]
 
@@ -2071,6 +2072,7 @@ requires-dist = [
     { name = "requests", specifier = ">=2.34.2" },
     { name = "starlette", specifier = ">=1.10.0" },
     { name = "torch", specifier = ">=2.14.1" },
+    { name = "tzdata", marker = "sys_platform == 'win32'", specifier = ">=2025.2" },
     { name = "uvicorn", specifier = ">=0.54.0" },
 ]
 

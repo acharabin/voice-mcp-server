@@ -59,9 +59,25 @@ See the [Runpod vLLM worker setup](https://github.com/runpod-workers/worker-vllm
 
 The project-root `andrew-context.md` is included as reference context only in Qwen's system prompt. Qwen answers as Andrew's AI clone using these facts and its trained style, without assuming the person chatting is Andrew. OpenAI keeps its existing assistant instructions and does not receive this profile. This adds prompt context, not retraining or changes to Runpod's model weights. Direct Runpod tests will need the same system context to compare outputs.
 
+Qwen also receives the current date in `America/Toronto` on every model request. It refreshes automatically at local midnight, including for an already-loaded agent and ongoing conversation.
+
 Deploy `andrew-context.md` alongside `conversation.py` on the droplet. Qwen reads it when first initialized and caches its prompt, so restart `voice-ai` after editing it; **New chat** gives a clean comparison. If the file is missing or empty, existing behavior is preserved. The context stays outside the web assets, but its contents are sent to the Qwen inference endpoint and can be used in answers.
 
 Useful optional additions: core values, a few personal stories, current projects and goals with an "as of" date, preferred answers to common personal questions, and explicit topics the clone should keep private. Unknown facts should stay unknown rather than being filled in by the model.
+
+### Sync portfolio details from Git
+
+`scripts/sync_portfolio.py` reads a local checkout of the portfolio repository and generates `andrew-portfolio.md`. It uses the homepage's biography, interests, education and dated experience, plus `skills.json` and `projects/projects.json`. It skips navigation, images, contact widgets, hardcoded age and hidden/commented content. No model calls, additional dependencies, repository changes, or network access are needed. The snapshot records source links, the Git commit, whether uncommitted changes were included, and the UTC snapshot date.
+
+From the Voice AI repository on Windows:
+
+```powershell
+python scripts/sync_portfolio.py --repo "C:\Users\Andrew Charabin\Documents\github\acharabin.github.io"
+```
+
+The default source is the sibling `acharabin.github.io` checkout, so `python scripts/sync_portfolio.py` also works with that directory layout. To update from GitHub, first pull your portfolio checkout as usual, then rerun the script. It reads local working files, including uncommitted changes, and never pulls or changes branches for you.
+
+Deploy the generated `andrew-portfolio.md` alongside `andrew-context.md` and restart `voice-ai` after syncing. Qwen includes both in its factual system context; OpenAI receives neither. Start **New chat** when comparing answers. Missing files are optional, and either context file can be used independently. Descriptions are copied from portfolio sources; linked code repositories and the resume PDF are not crawled or summarized.
 
 ### Test through MCP
 
